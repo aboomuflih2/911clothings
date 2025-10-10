@@ -83,14 +83,15 @@ const Checkout = () => {
   };
 
   const loadUPIDetails = async () => {
-    const { data } = await supabase
-      .from("payment_settings")
-      .select("*")
-      .limit(1)
-      .single();
-
-    if (data) {
-      setUpiDetails(data);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-payment-settings');
+      
+      if (error) throw error;
+      if (data && !data.error) {
+        setUpiDetails(data);
+      }
+    } catch (error) {
+      console.error('Failed to load UPI details:', error);
     }
   };
 
@@ -147,46 +148,38 @@ const Checkout = () => {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
 
-      // Generate order number
-      const { data: orderNumberData } = await supabase.rpc('generate_order_number');
-      
-      // Create order
+      // Prepare cart items for validation
+      const orderItems = items.map(item => ({
+        productId: item.id,
+        variantId: item.id,
+        quantity: item.quantity,
+        color: item.variant?.color,
+        size: item.variant?.size,
+      }));
+
+      // Call secure edge function to create order with price validation
+      const { data, error } = await supabase.functions.invoke('create-order', {
+        body: {
+          items: orderItems,
+          shippingAddressId: selectedAddress,
+          paymentMethod: paymentMethod,
+        },
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error);
+
+      // Fetch the created order
       const { data: order, error: orderError } = await supabase
         .from("orders")
-        .insert([{
-          order_number: orderNumberData,
-          user_id: user.id,
-          shipping_address_id: selectedAddress,
-          total_amount: totalPrice,
-          status: "pending",
-          payment_method: paymentMethod,
-          payment_status: paymentMethod === "cod" ? "pending" : "awaiting_verification",
-        }])
         .select()
+        .eq("id", data.orderId)
         .single();
 
       if (orderError) throw orderError;
-
-      // Create order items
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_name: item.name,
-        product_image: item.image,
-        variant_color: item.variant?.color,
-        variant_size: item.variant?.size,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
 
       setOrderData(order);
 
@@ -203,7 +196,7 @@ const Checkout = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to place order",
         variant: "destructive",
       });
     } finally {
