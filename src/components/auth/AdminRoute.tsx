@@ -21,7 +21,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        navigate("/auth");
+        navigate("/auth", { state: { from: window.location.pathname } });
         return;
       }
 
@@ -35,14 +35,14 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
       if (error) throw error;
 
       if (!data) {
-        navigate("/");
+        navigate("/auth", { state: { from: window.location.pathname } });
         return;
       }
 
       setIsAdmin(true);
     } catch (error) {
       console.error("Error checking admin access:", error);
-      navigate("/");
+      navigate("/auth", { state: { from: window.location.pathname } });
     } finally {
       setLoading(false);
     }
