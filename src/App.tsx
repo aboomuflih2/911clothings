@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./contexts/CartContext";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
+import Categories from "./pages/Categories";
 import ProductDetail from "./pages/ProductDetail";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -37,6 +38,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/categories" element={<Categories />} />
             <Route path="/stores" element={<Stores />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/auth" element={<Auth />} />
