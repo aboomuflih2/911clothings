@@ -21,6 +21,8 @@ import OrderManagement from "./pages/admin/OrderManagement";
 import ProductManagement from "./pages/admin/ProductManagement";
 import ProductEditor from "./pages/admin/ProductEditor";
 import CategoryManagement from "./pages/admin/CategoryManagement";
+import StoreManagement from "./pages/admin/StoreManagement";
+import Stores from "./pages/Stores";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/stores" element={<Stores />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
@@ -50,6 +53,7 @@ const App = () => (
             <Route path="/admin/products" element={<ProductManagement />} />
             <Route path="/admin/products/:id" element={<ProductEditor />} />
             <Route path="/admin/categories" element={<CategoryManagement />} />
+            <Route path="/admin/stores" element={<StoreManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
