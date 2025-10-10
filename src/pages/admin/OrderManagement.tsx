@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdminRoute from "@/components/auth/AdminRoute";
+import AdminNav from "@/components/admin/AdminNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,6 +159,7 @@ const OrderManagement = () => {
     <AdminRoute>
       <div className="min-h-screen flex flex-col">
         <Header />
+        <AdminNav />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-4">Order Management</h1>

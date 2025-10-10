@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdminRoute from "@/components/auth/AdminRoute";
+import AdminNav from "@/components/admin/AdminNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, ShoppingCart, TrendingUp, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -86,6 +87,7 @@ const Dashboard = () => {
     <AdminRoute>
       <div className="min-h-screen flex flex-col">
         <Header />
+        <AdminNav />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>

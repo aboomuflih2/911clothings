@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import AdminRoute from "@/components/auth/AdminRoute";
+import AdminNav from "@/components/admin/AdminNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,6 +169,7 @@ const CategoryManagement = () => {
     <AdminRoute>
       <div className="min-h-screen flex flex-col">
         <Header />
+        <AdminNav />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="mb-8">
             <Button
