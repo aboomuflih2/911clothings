@@ -219,10 +219,16 @@ const ProductEditor = () => {
     setSaving(true);
 
     try {
+      // Convert empty string to null for category_id
+      const productData = {
+        ...formData,
+        category_id: formData.category_id || null,
+      };
+
       if (isNew) {
         const { data, error } = await supabase
           .from("products")
-          .insert([formData])
+          .insert([productData])
           .select()
           .single();
 
@@ -237,7 +243,7 @@ const ProductEditor = () => {
       } else {
         const { error } = await supabase
           .from("products")
-          .update(formData)
+          .update(productData)
           .eq("id", id);
 
         if (error) throw error;
