@@ -9,6 +9,14 @@ import { X } from "lucide-react";
 interface FilterSidebarProps {
   onClose?: () => void;
   isMobile?: boolean;
+  selectedCategories: string[];
+  setSelectedCategories: (categories: string[]) => void;
+  priceRange: number[];
+  setPriceRange: (range: number[]) => void;
+  selectedSizes: string[];
+  setSelectedSizes: (sizes: string[]) => void;
+  selectedColors: string[];
+  setSelectedColors: (colors: string[]) => void;
 }
 
 const categories = [
@@ -44,41 +52,45 @@ const colors = [
   { id: "white", label: "White", hex: "#F9FAFB" },
 ];
 
-const FilterSidebar = ({ onClose, isMobile }: FilterSidebarProps) => {
-  const [priceRange, setPriceRange] = useState([0, 5000]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+const FilterSidebar = ({
+  onClose,
+  isMobile = false,
+  selectedCategories,
+  setSelectedCategories,
+  priceRange,
+  setPriceRange,
+  selectedSizes,
+  setSelectedSizes,
+  selectedColors,
+  setSelectedColors,
+}: FilterSidebarProps) => {
 
   const handleCategoryToggle = (categoryId: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+    const newCategories = selectedCategories.includes(categoryId)
+      ? selectedCategories.filter((id) => id !== categoryId)
+      : [...selectedCategories, categoryId];
+    setSelectedCategories(newCategories);
   };
 
   const handleSizeToggle = (sizeId: string) => {
-    setSelectedSizes((prev) =>
-      prev.includes(sizeId)
-        ? prev.filter((id) => id !== sizeId)
-        : [...prev, sizeId]
-    );
+    const newSizes = selectedSizes.includes(sizeId)
+      ? selectedSizes.filter((id) => id !== sizeId)
+      : [...selectedSizes, sizeId];
+    setSelectedSizes(newSizes);
   };
 
   const handleColorToggle = (colorId: string) => {
-    setSelectedColors((prev) =>
-      prev.includes(colorId)
-        ? prev.filter((id) => id !== colorId)
-        : [...prev, colorId]
-    );
+    const newColors = selectedColors.includes(colorId)
+      ? selectedColors.filter((id) => id !== colorId)
+      : [...selectedColors, colorId];
+    setSelectedColors(newColors);
   };
 
   const clearAllFilters = () => {
     setSelectedCategories([]);
     setSelectedSizes([]);
     setSelectedColors([]);
-    setPriceRange([0, 5000]);
+    setPriceRange([0, 10000]);
   };
 
   return (

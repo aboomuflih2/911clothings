@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FilterSidebar from "@/components/shop/FilterSidebar";
 import ProductGrid from "@/components/shop/ProductGrid";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -22,27 +24,116 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { SlidersHorizontal } from "lucide-react";
-
-// Mock product data
-const mockProducts = Array.from({ length: 48 }, (_, i) => ({
-  id: i + 1,
-  name: `Premium Kids Product ${i + 1}`,
-  price: Math.floor(Math.random() * 4000) + 500,
-  image: `https://images.unsplash.com/photo-${1515488042361 + i}?w=400&h=400&fit=crop`,
-  category: ["Newborn", "Dresses", "Toys", "Boys", "Girls"][Math.floor(Math.random() * 5)],
-  isNew: Math.random() > 0.7,
-}));
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const ITEMS_PER_PAGE = 12;
 
 const Shop = () => {
+  const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("popularity");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
-  const totalPages = Math.ceil(mockProducts.length / ITEMS_PER_PAGE);
+  const { data: allProducts, isLoading } = useQuery({
+    queryKey: ["shop-products"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id,
+          title,
+          category_id,
+          categories (
+            name,
+            slug
+          ),
+          product_images (
+            image_url,
+            is_primary
+          ),
+          product_variants (
+            price,
+            size,
+            color
+          )
+        `)
+        .eq("is_active", true);
+
+      if (error) throw error;
+
+      return data?.map((product) => ({
+        id: product.id,
+        name: product.title,
+        price: product.product_variants?.[0]?.price || 0,
+        image: product.product_images?.find((img) => img.is_primary)?.image_url || 
+               product.product_images?.[0]?.image_url || 
+               "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&h=400&fit=crop",
+        category: product.categories?.name || "Uncategorized",
+        categorySlug: product.categories?.slug,
+        variants: product.product_variants || [],
+      }));
+    },
+  });
+
+  const filteredProducts = useMemo(() => {
+    if (!allProducts) return [];
+
+    let filtered = [...allProducts];
+
+    // Filter by category from URL
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      filtered = filtered.filter((p) => p.categorySlug === categoryParam);
+    }
+
+    // Filter by selected categories
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter((p) => selectedCategories.includes(p.category));
+    }
+
+    // Filter by price range
+    filtered = filtered.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
+
+    // Filter by size
+    if (selectedSizes.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.variants.some((v: any) => selectedSizes.includes(v.size))
+      );
+    }
+
+    // Filter by color
+    if (selectedColors.length > 0) {
+      filtered = filtered.filter((p) =>
+        p.variants.some((v: any) => selectedColors.includes(v.color))
+      );
+    }
+
+    // Sort products
+    switch (sortBy) {
+      case "newest":
+        filtered.reverse();
+        break;
+      case "price-low":
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [allProducts, selectedCategories, priceRange, selectedSizes, selectedColors, sortBy, searchParams]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentProducts = mockProducts.slice(startIndex, endIndex);
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -59,7 +150,7 @@ const Shop = () => {
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">Shop All Products</h1>
             <p className="text-muted-foreground">
-              Showing {startIndex + 1}-{Math.min(endIndex, mockProducts.length)} of {mockProducts.length} products
+              Showing {filteredProducts.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
             </p>
           </div>
         </div>
@@ -69,7 +160,16 @@ const Shop = () => {
             {/* Desktop Filter Sidebar */}
             <aside className="hidden lg:block w-64 flex-shrink-0">
               <div className="sticky top-24">
-                <FilterSidebar />
+                <FilterSidebar
+                  selectedCategories={selectedCategories}
+                  setSelectedCategories={setSelectedCategories}
+                  priceRange={priceRange}
+                  setPriceRange={setPriceRange}
+                  selectedSizes={selectedSizes}
+                  setSelectedSizes={setSelectedSizes}
+                  selectedColors={selectedColors}
+                  setSelectedColors={setSelectedColors}
+                />
               </div>
             </aside>
 
@@ -86,7 +186,18 @@ const Shop = () => {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="p-0 w-80">
-                    <FilterSidebar isMobile onClose={() => {}} />
+                    <FilterSidebar
+                      isMobile
+                      onClose={() => {}}
+                      selectedCategories={selectedCategories}
+                      setSelectedCategories={setSelectedCategories}
+                      priceRange={priceRange}
+                      setPriceRange={setPriceRange}
+                      selectedSizes={selectedSizes}
+                      setSelectedSizes={setSelectedSizes}
+                      selectedColors={selectedColors}
+                      setSelectedColors={setSelectedColors}
+                    />
                   </SheetContent>
                 </Sheet>
 
@@ -108,7 +219,23 @@ const Shop = () => {
               </div>
 
               {/* Product Grid */}
-              <ProductGrid products={currentProducts} />
+              {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="aspect-square w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-6 w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground text-lg">No products found matching your filters.</p>
+                </div>
+              ) : (
+                <ProductGrid products={currentProducts} />
+              )}
 
               {/* Pagination */}
               <div className="mt-12">
