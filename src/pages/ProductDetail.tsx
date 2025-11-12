@@ -206,8 +206,11 @@ const ProductDetail = () => {
   }
 
   const currentUrl = window.location.href;
-  const primaryImage = imageUrls[0] || "";
-  const productDescription = product.description || "";
+  // Ensure image URL is absolute for social media sharing
+  const primaryImage = imageUrls[0] 
+    ? (imageUrls[0].startsWith('http') ? imageUrls[0] : `${window.location.origin}${imageUrls[0]}`)
+    : `${window.location.origin}/placeholder.svg`;
+  const productDescription = product.description || `${product.title} - Premium quality product from 911 Clothings`;
 
   return (
     <div className="min-h-screen flex flex-col">
