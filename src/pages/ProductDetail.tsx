@@ -222,8 +222,17 @@ const ProductDetail = () => {
         <meta property="og:type" content="product" />
         <meta property="og:title" content={product.title} />
         <meta property="og:description" content={productDescription} />
-        <meta property="og:image" content={primaryImage} />
         <meta property="og:url" content={currentUrl} />
+        
+        {/* Image tags - CRITICAL for WhatsApp */}
+        <meta property="og:image" content={primaryImage} />
+        <meta property="og:image:secure_url" content={primaryImage} />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={product.title} />
+        
+        {/* Product-specific tags */}
         <meta property="og:price:amount" content={currentPrice.toString()} />
         <meta property="og:price:currency" content="INR" />
         
@@ -232,6 +241,7 @@ const ProductDetail = () => {
         <meta name="twitter:title" content={product.title} />
         <meta name="twitter:description" content={productDescription} />
         <meta name="twitter:image" content={primaryImage} />
+        <meta name="twitter:image:alt" content={product.title} />
       </Helmet>
 
       <Header />
