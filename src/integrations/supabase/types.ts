@@ -73,6 +73,7 @@ export type Database = {
           is_active: boolean
           name: string
           slug: string
+          thumbnail_url: string | null
           updated_at: string
         }
         Insert: {
@@ -82,6 +83,7 @@ export type Database = {
           is_active?: boolean
           name: string
           slug: string
+          thumbnail_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -91,6 +93,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           slug?: string
+          thumbnail_url?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -262,6 +265,7 @@ export type Database = {
           color: string | null
           created_at: string
           id: string
+          image_url: string | null
           is_active: boolean
           price: number
           product_id: string
@@ -274,6 +278,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           price: number
           product_id: string
@@ -286,6 +291,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           price?: number
           product_id?: string
@@ -449,10 +455,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_order_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_order_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
