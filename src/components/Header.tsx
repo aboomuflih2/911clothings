@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/contexts/CartContext";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo.png";
 
 const Header = () => {
   const navigate = useNavigate();

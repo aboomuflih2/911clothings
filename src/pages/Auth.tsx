@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { User, Session } from "@supabase/supabase-js";
-import logo from "@/assets/logo.jpeg";
+import logo from "@/assets/logo.png";
 
 // Validation schemas
 const signUpSchema = z.object({
