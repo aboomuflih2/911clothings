@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const slides = [
   {
@@ -59,8 +60,8 @@ const HeroSection = () => {
               <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground mb-8 animate-fade-in">
                 {slide.subtitle}
               </p>
-              <Button size="lg" className="animate-scale-in">
-                {slide.cta}
+              <Button size="lg" className="animate-scale-in" asChild>
+                <Link to="/shop">{slide.cta}</Link>
               </Button>
             </div>
           </div>
