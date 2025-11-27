@@ -351,7 +351,21 @@ const OrderManagement = () => {
                   <div>
                     <Label>Payment Proof</Label>
                     <div className="mt-2">
-                      <img src={selectedOrder.payment_proof_url} alt="Payment proof" className="max-h-64 rounded border" />
+                      {(() => {
+                        const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
+                        const customBase = (import.meta as any).env.VITE_SUPABASE_URL;
+                        const fixed = selectedOrder.payment_proof_url?.startsWith(customBase)
+                          ? selectedOrder.payment_proof_url.replace(String(customBase), String(storageBase))
+                          : selectedOrder.payment_proof_url;
+                        return (
+                          <img
+                            src={fixed}
+                            alt="Payment proof"
+                            className="max-h-64 rounded border"
+                            crossOrigin="anonymous"
+                          />
+                        );
+                      })()}
                     </div>
                     <div className="flex gap-2 mt-3">
                       <Button onClick={() => handleVerifyPayment(true)} disabled={verifying}>Verify Payment</Button>

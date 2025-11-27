@@ -65,10 +65,9 @@ const PaymentSettings = () => {
       .from("payment-settings")
       .upload(fileName, qrFile, { upsert: true });
     if (uploadError) throw uploadError;
-    const { data: publicUrlData } = supabase.storage
-      .from("payment-settings")
-      .getPublicUrl(fileName);
-    return publicUrlData.publicUrl;
+    const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
+    const publicUrl = `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-settings/${fileName}`;
+    return publicUrl;
   };
 
   const onSubmit = async (values: PaymentForm) => {

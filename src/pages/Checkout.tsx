@@ -224,9 +224,8 @@ const Checkout = () => {
             .from("payment-proofs")
             .upload(fileName, paymentProof);
           if (uploadError) throw uploadError;
-          const { data: { publicUrl } } = supabase.storage
-            .from("payment-proofs")
-            .getPublicUrl(fileName);
+          const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
+          const publicUrl = `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${fileName}`;
           const { error: updateError } = await supabase
             .from("orders")
             .update({ payment_proof_url: publicUrl, payment_status: "submitted" })
@@ -274,9 +273,8 @@ const Checkout = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("payment-proofs")
-        .getPublicUrl(fileName);
+      const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
+      const publicUrl = `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${fileName}`;
 
       const { error: updateError } = await supabase
         .from("orders")
