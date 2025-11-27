@@ -272,6 +272,7 @@ const OrderDetail = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
+                          <a href={proofSrc || order.payment_proof_url || undefined} target="_blank" rel="noopener noreferrer">
                           <img
                             src={proofSrc || order.payment_proof_url || undefined}
                             alt="Payment proof"
@@ -296,6 +297,7 @@ const OrderDetail = () => {
                               }
                             }}
                           />
+                          </a>
                           {proofSrc && (
                             <a href={proofSrc} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Open full image</a>
                           )}

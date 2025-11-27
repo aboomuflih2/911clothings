@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Order {
@@ -130,12 +129,27 @@ const OrderManagement = () => {
     await fetchOrderDetails(order.id);
     await fetchShippingAddress(order.shipping_address_id || null);
     if (order.payment_method === "upi" && order.payment_proof_url) {
-      const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
-      const pathMatch = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
-      const fixed = pathMatch
-        ? `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${pathMatch[1]}`
-        : order.payment_proof_url;
-      setProofSrc(fixed);
+      const match = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
+      const path = match ? match[1] : null;
+      if (path) {
+        const { data, error } = await supabase.storage
+          .from("payment-proofs")
+          .createSignedUrl(path, 3600);
+        if (!error && data?.signedUrl) {
+          setProofSrc(data.signedUrl);
+        } else {
+          const { data: blob, error: dlErr } = await supabase.storage
+            .from("payment-proofs")
+            .download(path);
+          if (!dlErr && blob) {
+            setProofSrc(URL.createObjectURL(blob));
+          } else {
+            setProofSrc(order.payment_proof_url);
+          }
+        }
+      } else {
+        setProofSrc(order.payment_proof_url);
+      }
     } else {
       setProofSrc(null);
     }
@@ -363,6 +377,7 @@ const OrderManagement = () => {
                   <div>
                     <Label>Payment Proof</Label>
                     <div className="mt-2">
+                      <a href={proofSrc || selectedOrder.payment_proof_url || undefined} target="_blank" rel="noopener noreferrer">
                       <img
                         src={proofSrc || selectedOrder.payment_proof_url || undefined}
                         alt="Payment proof"
@@ -374,13 +389,20 @@ const OrderManagement = () => {
                           if (!path) return;
                           const { data, error } = await supabase.storage
                             .from("payment-proofs")
+                            .createSignedUrl(path, 3600);
+                          if (!error && data?.signedUrl) {
+                            setProofSrc(data.signedUrl);
+                            return;
+                          }
+                          const { data: blob, error: dlErr } = await supabase.storage
+                            .from("payment-proofs")
                             .download(path);
-                          if (!error && data) {
-                            const url = URL.createObjectURL(data);
-                            setProofSrc(url);
+                          if (!dlErr && blob) {
+                            setProofSrc(URL.createObjectURL(blob));
                           }
                         }}
                       />
+                      </a>
                     </div>
                     <div className="flex gap-2 mt-3">
                       <Button onClick={() => handleVerifyPayment(true)} disabled={verifying}>Verify Payment</Button>
