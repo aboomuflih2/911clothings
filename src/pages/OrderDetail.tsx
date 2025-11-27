@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ChevronLeft, Package, MapPin, Truck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OrderItem {
   id: string;
@@ -52,6 +53,7 @@ const OrderDetail = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [proofSrc, setProofSrc] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -81,7 +83,17 @@ const OrderDetail = () => {
         .single();
 
       if (!orderError && orderData) {
-        setOrder(orderData);
+        setOrderData(orderData);
+        if (orderData.payment_method === "upi" && orderData.payment_proof_url) {
+          const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
+          const pathMatch = String(orderData.payment_proof_url).match(/payment-proofs\/(.*)$/);
+          const fixed = pathMatch
+            ? `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${pathMatch[1]}`
+            : orderData.payment_proof_url;
+          setProofSrc(fixed);
+        } else {
+          setProofSrc(null);
+        }
       }
 
       // Fetch order items
@@ -245,19 +257,29 @@ const OrderDetail = () => {
                         <CardTitle>Payment Proof</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        {(() => {
-                          const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
-                          const pathMatch = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
-                          const fixed = pathMatch
-                            ? `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${pathMatch[1]}`
-                            : order.payment_proof_url;
-                          return (
-                            <div className="space-y-2">
-                              <img src={fixed} alt="Payment proof" className="max-h-64 rounded border" crossOrigin="anonymous" />
-                              <a href={fixed} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Open full image</a>
-                            </div>
-                          );
-                        })()}
+                        <div className="space-y-2">
+                          <img
+                            src={proofSrc || order.payment_proof_url || undefined}
+                            alt="Payment proof"
+                            className="max-h-64 rounded border"
+                            crossOrigin="anonymous"
+                            onError={async () => {
+                              const match = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
+                              const path = match ? match[1] : null;
+                              if (!path) return;
+                              const { data, error } = await supabase.storage
+                                .from("payment-proofs")
+                                .download(path);
+                              if (!error && data) {
+                                const url = URL.createObjectURL(data);
+                                setProofSrc(url);
+                              }
+                            }}
+                          />
+                          {proofSrc && (
+                            <a href={proofSrc} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Open full image</a>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   )}
