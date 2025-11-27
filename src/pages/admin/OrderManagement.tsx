@@ -49,6 +49,7 @@ const OrderManagement = () => {
   const [proofSrc, setProofSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [proofPreviewOpen, setProofPreviewOpen] = useState(false);
   const { toast } = useToast();
   const [shippingAddress, setShippingAddress] = useState<any | null>(null);
 
@@ -377,11 +378,10 @@ const OrderManagement = () => {
                   <div>
                     <Label>Payment Proof</Label>
                     <div className="mt-2">
-                      <a href={proofSrc || selectedOrder.payment_proof_url || undefined} target="_blank" rel="noopener noreferrer">
                       <img
                         src={proofSrc || selectedOrder.payment_proof_url || undefined}
                         alt="Payment proof"
-                        className="max-h-64 rounded border"
+                        className="max-h-64 rounded border cursor-zoom-in"
                         crossOrigin="anonymous"
                         onError={async () => {
                           const match = String(selectedOrder.payment_proof_url).match(/payment-proofs\/(.*)$/);
@@ -401,9 +401,25 @@ const OrderManagement = () => {
                             setProofSrc(URL.createObjectURL(blob));
                           }
                         }}
+                        onClick={() => setProofPreviewOpen(true)}
                       />
-                      </a>
                     </div>
+                    {/* Proof Preview Modal */}
+                    <Dialog open={proofPreviewOpen} onOpenChange={setProofPreviewOpen}>
+                      <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                          <DialogTitle>Payment Proof</DialogTitle>
+                        </DialogHeader>
+                        <div className="max-h-[80vh] overflow-auto">
+                          <img
+                            src={proofSrc || selectedOrder.payment_proof_url || undefined}
+                            alt="Payment proof"
+                            className="w-full h-auto object-contain"
+                            crossOrigin="anonymous"
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                     <div className="flex gap-2 mt-3">
                       <Button onClick={() => handleVerifyPayment(true)} disabled={verifying}>Verify Payment</Button>
                       <Button variant="outline" onClick={() => handleVerifyPayment(false)} disabled={verifying}>Reject</Button>

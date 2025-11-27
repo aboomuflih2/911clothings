@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ChevronLeft, Package, MapPin, Truck } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface OrderItem {
   id: string;
@@ -53,6 +54,7 @@ const OrderDetail = () => {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [proofSrc, setProofSrc] = useState<string | null>(null);
+  const [proofPreviewOpen, setProofPreviewOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -272,11 +274,10 @@ const OrderDetail = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          <a href={proofSrc || order.payment_proof_url || undefined} target="_blank" rel="noopener noreferrer">
                           <img
                             src={proofSrc || order.payment_proof_url || undefined}
                             alt="Payment proof"
-                            className="max-h-64 rounded border"
+                            className="max-h-64 rounded border cursor-zoom-in"
                             crossOrigin="anonymous"
                             onError={async () => {
                               const match = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
@@ -296,8 +297,23 @@ const OrderDetail = () => {
                                 setProofSrc(URL.createObjectURL(blob));
                               }
                             }}
+                            onClick={() => setProofPreviewOpen(true)}
                           />
-                          </a>
+                          <Dialog open={proofPreviewOpen} onOpenChange={setProofPreviewOpen}>
+                            <DialogContent className="max-w-4xl">
+                              <DialogHeader>
+                                <DialogTitle>Payment Proof</DialogTitle>
+                              </DialogHeader>
+                              <div className="max-h-[80vh] overflow-auto">
+                                <img
+                                  src={proofSrc || order.payment_proof_url || undefined}
+                                  alt="Payment proof"
+                                  className="w-full h-auto object-contain"
+                                  crossOrigin="anonymous"
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                           {proofSrc && (
                             <a href={proofSrc} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Open full image</a>
                           )}
