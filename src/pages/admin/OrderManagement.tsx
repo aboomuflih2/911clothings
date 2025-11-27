@@ -26,6 +26,7 @@ interface Order {
   payment_method: string | null;
   payment_status: string | null;
   payment_proof_url: string | null;
+  payment_proof_path: string | null;
 }
 
 interface OrderItem {
@@ -129,9 +130,8 @@ const OrderManagement = () => {
     setTrackingNumber(order.tracking_number || "");
     await fetchOrderDetails(order.id);
     await fetchShippingAddress(order.shipping_address_id || null);
-    if (order.payment_method === "upi" && order.payment_proof_url) {
-      const match = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
-      const path = match ? match[1] : null;
+    if (order.payment_method === "upi" && (order.payment_proof_path || order.payment_proof_url)) {
+      const path = order.payment_proof_path || (String(order.payment_proof_url).match(/payment-proofs\/(.*)$/)?.[1] || null);
       if (path) {
         const { data, error } = await supabase.storage
           .from("payment-proofs")
@@ -374,7 +374,7 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                {selectedOrder.payment_method === "upi" && selectedOrder.payment_proof_url && (
+                {selectedOrder.payment_method === "upi" && (selectedOrder.payment_proof_path || selectedOrder.payment_proof_url) && (
                   <div>
                     <Label>Payment Proof</Label>
                     <div className="mt-2">
@@ -384,8 +384,7 @@ const OrderManagement = () => {
                         className="max-h-64 rounded border cursor-zoom-in"
                         crossOrigin="anonymous"
                         onError={async () => {
-                          const match = String(selectedOrder.payment_proof_url).match(/payment-proofs\/(.*)$/);
-                          const path = match ? match[1] : null;
+                          const path = selectedOrder.payment_proof_path || (String(selectedOrder.payment_proof_url).match(/payment-proofs\/(.*)$/)?.[1] || null);
                           if (!path) return;
                           const { data, error } = await supabase.storage
                             .from("payment-proofs")

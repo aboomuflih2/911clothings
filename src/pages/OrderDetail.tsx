@@ -46,6 +46,7 @@ interface Order {
   payment_method?: string | null;
   payment_status?: string | null;
   payment_proof_url?: string | null;
+  payment_proof_path?: string | null;
 }
 
 const OrderDetail = () => {
@@ -85,9 +86,8 @@ const OrderDetail = () => {
 
       if (!orderError && orderData) {
         setOrderData(orderData);
-        if (orderData.payment_method === "upi" && orderData.payment_proof_url) {
-          const match = String(orderData.payment_proof_url).match(/payment-proofs\/(.*)$/);
-          const path = match ? match[1] : null;
+        if (orderData.payment_method === "upi" && (orderData.payment_proof_path || orderData.payment_proof_url)) {
+          const path = orderData.payment_proof_path || (String(orderData.payment_proof_url).match(/payment-proofs\/(.*)$/)?.[1] || null);
           if (path) {
             const { data, error } = await supabase.storage
               .from("payment-proofs")
@@ -267,7 +267,7 @@ const OrderDetail = () => {
                   )}
 
                   {/* Payment Proof (UPI) */}
-                  {order.payment_method === "upi" && order.payment_proof_url && (
+                  {order.payment_method === "upi" && (order.payment_proof_path || order.payment_proof_url) && (
                     <Card>
                       <CardHeader>
                         <CardTitle>Payment Proof</CardTitle>

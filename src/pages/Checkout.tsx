@@ -214,29 +214,26 @@ const Checkout = () => {
 
       setOrderData(order);
 
-      if (paymentMethod === "upi") {
-        if (paymentProof) {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error("Not authenticated");
-          const fileExt = paymentProof.name.split(".").pop();
-          const fileName = `${user.id}/${order.id}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from("payment-proofs")
-            .upload(fileName, paymentProof);
-          if (uploadError) throw uploadError;
-          const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
-          const publicUrl = `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${fileName}`;
-          const { error: updateError } = await supabase
-            .from("orders")
-            .update({ payment_proof_url: publicUrl, payment_status: "submitted" })
-            .eq("id", order.id);
-          if (updateError) throw updateError;
-          clearCart();
-          navigate("/account/orders");
-          toast({ title: "Order placed!", description: "Payment proof uploaded for verification" });
-        } else {
-          setStep(3);
-        }
+        if (paymentMethod === "upi") {
+          if (paymentProof) {
+            const { data: { user } } = await supabase.auth.getUser();
+          const fileExt = (paymentProof.name.split(".").pop() || "png").toLowerCase();
+          const fileName = `${order.id}-${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+              .from("payment-proofs")
+            .upload(fileName, paymentProof, { contentType: paymentProof.type || "image/png" });
+            if (uploadError) throw uploadError;
+            const { error: updateError } = await supabase
+              .from("orders")
+            .update({ payment_proof_path: fileName, payment_status: "paid_pending_review" })
+              .eq("id", order.id);
+            if (updateError) throw updateError;
+            clearCart();
+            navigate("/account/orders");
+            toast({ title: "Order placed!", description: "Payment proof uploaded for verification" });
+          } else {
+            setStep(3);
+          }
       } else {
         clearCart();
         navigate("/account/orders");
@@ -262,23 +259,19 @@ const Checkout = () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
 
-      const fileExt = paymentProof.name.split(".").pop();
-      const fileName = `${user.id}/${orderData.id}.${fileExt}`;
+      const fileExt = (paymentProof.name.split(".").pop() || "png").toLowerCase();
+      const fileName = `${orderData.id}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("payment-proofs")
-        .upload(fileName, paymentProof);
+        .upload(fileName, paymentProof, { contentType: paymentProof.type || "image/png" });
 
       if (uploadError) throw uploadError;
 
-      const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
-      const publicUrl = `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${fileName}`;
-
       const { error: updateError } = await supabase
         .from("orders")
-        .update({ payment_proof_url: publicUrl, payment_status: "submitted" })
+        .update({ payment_proof_path: fileName, payment_status: "paid_pending_review" })
         .eq("id", orderData.id);
 
       if (updateError) throw updateError;
