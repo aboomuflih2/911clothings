@@ -42,6 +42,9 @@ interface Order {
   notes: string | null;
   created_at: string;
   addresses: Address | null;
+  payment_method?: string | null;
+  payment_status?: string | null;
+  payment_proof_url?: string | null;
 }
 
 const OrderDetail = () => {
@@ -231,6 +234,30 @@ const OrderDetail = () => {
                         <p className="font-mono font-semibold">
                           {order.tracking_number}
                         </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Payment Proof (UPI) */}
+                  {order.payment_method === "upi" && order.payment_proof_url && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Payment Proof</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(() => {
+                          const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
+                          const pathMatch = String(order.payment_proof_url).match(/payment-proofs\/(.*)$/);
+                          const fixed = pathMatch
+                            ? `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${pathMatch[1]}`
+                            : order.payment_proof_url;
+                          return (
+                            <div className="space-y-2">
+                              <img src={fixed} alt="Payment proof" className="max-h-64 rounded border" crossOrigin="anonymous" />
+                              <a href={fixed} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Open full image</a>
+                            </div>
+                          );
+                        })()}
                       </CardContent>
                     </Card>
                   )}
