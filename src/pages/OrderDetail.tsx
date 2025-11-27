@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ChevronLeft, Package, MapPin, Truck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface OrderItem {
   id: string;
@@ -85,12 +84,27 @@ const OrderDetail = () => {
       if (!orderError && orderData) {
         setOrderData(orderData);
         if (orderData.payment_method === "upi" && orderData.payment_proof_url) {
-          const storageBase = (import.meta as any).env.VITE_SUPABASE_STORAGE_URL || (import.meta as any).env.VITE_SUPABASE_URL;
-          const pathMatch = String(orderData.payment_proof_url).match(/payment-proofs\/(.*)$/);
-          const fixed = pathMatch
-            ? `${String(storageBase).replace(/\/$/, "")}/storage/v1/object/public/payment-proofs/${pathMatch[1]}`
-            : orderData.payment_proof_url;
-          setProofSrc(fixed);
+          const match = String(orderData.payment_proof_url).match(/payment-proofs\/(.*)$/);
+          const path = match ? match[1] : null;
+          if (path) {
+            const { data, error } = await supabase.storage
+              .from("payment-proofs")
+              .createSignedUrl(path, 3600);
+            if (!error && data?.signedUrl) {
+              setProofSrc(data.signedUrl);
+            } else {
+              const { data: blob, error: dlErr } = await supabase.storage
+                .from("payment-proofs")
+                .download(path);
+              if (!dlErr && blob) {
+                setProofSrc(URL.createObjectURL(blob));
+              } else {
+                setProofSrc(orderData.payment_proof_url);
+              }
+            }
+          } else {
+            setProofSrc(orderData.payment_proof_url);
+          }
         } else {
           setProofSrc(null);
         }
@@ -269,10 +283,16 @@ const OrderDetail = () => {
                               if (!path) return;
                               const { data, error } = await supabase.storage
                                 .from("payment-proofs")
+                                .createSignedUrl(path, 3600);
+                              if (!error && data?.signedUrl) {
+                                setProofSrc(data.signedUrl);
+                                return;
+                              }
+                              const { data: blob, error: dlErr } = await supabase.storage
+                                .from("payment-proofs")
                                 .download(path);
-                              if (!error && data) {
-                                const url = URL.createObjectURL(data);
-                                setProofSrc(url);
+                              if (!dlErr && blob) {
+                                setProofSrc(URL.createObjectURL(blob));
                               }
                             }}
                           />
